@@ -465,6 +465,11 @@ public class StendhalRPZone extends MarauroaRPZone {
 
 	public void addCollisionLayer(final String name, final LayerDefinition collisionLayer)
 			throws IOException {
+		// DEBUG:
+		if (getName().equals("0_semos_city")) {
+			System.out.println("\nAdding collision layer to Semos City\n");
+		}
+
 		addToContent(name, collisionLayer.encode());
 		collisionMap.setCollisionData(collisionLayer);
 	}
