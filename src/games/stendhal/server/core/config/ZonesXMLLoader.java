@@ -24,6 +24,7 @@ import org.xml.sax.SAXException;
 //
 //
 
+import games.stendhal.common.tiled.CollisionLayerDefinition;
 import games.stendhal.common.tiled.LayerDefinition;
 import games.stendhal.common.tiled.StendhalMapStructure;
 import games.stendhal.server.core.config.zone.AttributesXMLReader;
@@ -69,6 +70,9 @@ public final class ZonesXMLLoader {
 	 * The zone group file.
 	 */
 	private final URI uri;
+
+	private static final boolean testserver = System.getProperty("stendhal.testserver") != null;
+
 
 	/**
 	 * Create an XML based loader of zones.
@@ -217,12 +221,22 @@ public final class ZonesXMLLoader {
 		loadOptionalLayer(zone, zonedata, "blend_ground");
 		loadOptionalLayer(zone, zonedata, "blend_roof");
 
-		zone.addCollisionLayer(name + ".collision",
-				zonedata.getLayer("collision"));
+		if (testserver) {
+			final CollisionLayerDefinition collisionLayer =
+				new CollisionLayerDefinition(zonedata.getLayer("collision"));
+
+			zone.addCollisionLayer(name + ".collision", collisionLayer,
+				collisionLayer.getTilesetGid());
+		} else {
+			zone.addCollisionLayer(name + ".collision",
+					zonedata.getLayer("collision"));
+		}
+
 		zone.addProtectionLayer(name + ".protection",
 				zonedata.getLayer("protection"));
 
 		// DEBUG:
+		/*
 		if (zone.getName().equals("0_semos_city")) {
 			System.out.println("\nChecking Semos City collision ...");
 			final LayerDefinition collisionLayer = zonedata.getLayer("collision");
@@ -242,6 +256,7 @@ public final class ZonesXMLLoader {
 
 			System.out.println();
 		}
+		*/
 
 		if (desc.isInterior()) {
 			zone.setPosition();

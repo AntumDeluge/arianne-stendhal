@@ -232,16 +232,6 @@ public class CollisionMap {
 	}
 
 	/**
-	 * Sets all collision info for map at once.
-	 *
-	 * @param collisionInfo
-	 *     Map collision information.
-	 */
-	public void set(final byte[][] collisionInfo) {
-		nodes = collisionInfo;
-	}
-
-	/**
 	 * Removes collision from a node.
 	 *
 	 * @param i
