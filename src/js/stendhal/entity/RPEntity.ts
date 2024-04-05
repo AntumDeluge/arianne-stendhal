@@ -326,7 +326,7 @@ export class RPEntity extends ActiveEntity {
 		const filename = stendhal.paths.sprites + "/outfit/" + part + "/" + n + ".png";
 		let color: any;
 		if (this.outfit) {
-			if (part === "body" || part === "head") {
+			if (singletons.getOutfitStore().isSkinLayer(part)) {
 				color = this.outfit.getLayerColor("skin");
 			} else {
 				color = this.outfit.getLayerColor(part);
