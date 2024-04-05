@@ -16,6 +16,9 @@ import { ActiveEntity } from "./ActiveEntity";
 import { Entity } from "./Entity";
 import { singletons } from "../SingletonRepo";
 import { MenuItem } from "../action/MenuItem";
+
+import { Outfit } from "../data/Outfit";
+
 import { Chat } from "../util/Chat";
 import { Color } from "../util/Color";
 import { Nature } from "../util/Nature";
@@ -55,6 +58,8 @@ export class RPEntity extends ActiveEntity {
 	protected titleDrawYOffset: number = 0;
 	// canvas for merging outfit layers to be drawn
 	private octx?: CanvasRenderingContext2D;
+	/** This entity's outfit. */
+	private outfit?: Outfit;
 
 	private attackers: {[key: string]: any} = { size: 0 };
 
@@ -95,6 +100,9 @@ export class RPEntity extends ActiveEntity {
 			this.onLevelChanged(key, value, oldValue);
 		} else if (["title", "name", "class", "type"].indexOf(key) >-1) {
 			this.createTitleTextSprite();
+		} else if ((key === "outfit_ext" || key === "outfit") && this.outfit) {
+			// update outfit if it has already been created
+			this.buildOutfit();
 		}
 	}
 
@@ -106,6 +114,8 @@ export class RPEntity extends ActiveEntity {
 			this.addFloater("Back", "#ffff00");
 		} else if (key === "grumpy") {
 			this.addFloater("Receptive", "#ffff00");
+		} else if (key === "outfit_ext" || key === "outfit") {
+			this.outfit = undefined;
 		}
 		super.unset(key);
 	}
@@ -209,29 +219,42 @@ export class RPEntity extends ActiveEntity {
 		return typeof(this["no_shadow"]) === "undefined";
 	}
 
-	drawMultipartOutfit(ctx: CanvasRenderingContext2D) {
-		const store = singletons.getOutfitStore();
-		// layers in draw order
-		var layers = store.getLayerNames();
-
-		var outfit: {[key: string]: number} = {};
-		if ("outfit_ext" in this) {
-			for (const part of this["outfit_ext"].split(",")) {
+	/**
+	 * Sets entity's outfit.
+	 */
+	private buildOutfit() {
+		const legacy = !("outfit_ext" in this);
+		const layerInfo = legacy ? this["outfit"] : this["outfit_ext"];
+		this.outfit = new Outfit();
+		if (!legacy) {
+			for (const part of layerInfo.split(",")) {
 				if (part.includes("=")) {
 					var tmp = part.split("=");
-					outfit[tmp[0]] = parseInt(tmp[1], 10);
+					this.outfit.setLayer(tmp[0], parseInt(tmp[1], 10));
 				}
 			}
+			const detailIndex = this.outfit.getLayerIndex("detail");
+			if (detailIndex != undefined && singletons.getOutfitStore().detailHasRearLayer(detailIndex)) {
+				this.outfit.setLayer("detail-rear", detailIndex);
+			}
 		} else {
-			layers = store.getLayerNames(true);
-
-			outfit["body"] = this["outfit"] % 100;
-			outfit["dress"] = Math.floor(this["outfit"]/100) % 100;
-			outfit["head"] = Math.floor(this["outfit"]/10000) % 100;
-			outfit["hair"] = Math.floor(this["outfit"]/1000000) % 100;
-			outfit["detail"] = Math.floor(this["outfit"]/100000000) % 100;
+			this.outfit.setLayer("body", layerInfo % 100);
+			this.outfit.setLayer("dress", Math.floor(layerInfo/100) % 100);
+			this.outfit.setLayer("head", Math.floor(layerInfo/10000) % 100);
+			this.outfit.setLayer("hair", Math.floor(layerInfo/1000000) % 100);
+			this.outfit.setLayer("detail", Math.floor(layerInfo/100000000) % 100);
 		}
 
+		if ("outfit_colors" in this) {
+			this.outfit.setColoring(this["outfit_colors"]);
+		}
+	}
+
+	drawMultipartOutfit(ctx: CanvasRenderingContext2D) {
+		if (!this.outfit) {
+			this.buildOutfit();
+		}
+		const outfit = this.outfit!;
 		if (stendhal.config.getBoolean("effect.shadows") && this.castsShadow()) {
 			// dressed entities should use 48x64 sprites
 			// FIXME: this will not display correctly for horse outfit
@@ -246,17 +269,16 @@ export class RPEntity extends ActiveEntity {
 		if (this.octx) {
 			this.octx.clearRect(0, 0, this.octx.canvas.width, this.octx.canvas.height);
 		}
-		if (stendhal.data.outfit.detailHasRearLayer(outfit["detail"])) {
-			layers.splice(0, 0, "detail-rear");
-			outfit["detail-rear"] = outfit["detail"];
-		}
-		for (const layer of layers) {
+		// TODO: cache outfit sprites
+		const bodyIndex = outfit.getLayerIndex("body") || 0;
+		const hatIndex = outfit.getLayerIndex("hat");
+		for (const p of outfit.getLayers()) {
 			// hair is not drawn under certain hats/helmets
-			if (layer == "hair" && !stendhal.data.outfit.drawHair(outfit["hat"])) {
+			if (p.first == "hair" && !stendhal.data.outfit.drawHair(hatIndex)) {
 				continue;
 			}
 
-			const lsprite = this.getOutfitPart(layer, outfit[layer], outfit["body"]);
+			const lsprite = this.getOutfitPart(p.first, p.second, bodyIndex);
 			if (lsprite && lsprite.complete && lsprite.height) {
 				if (!this.octx) {
 					let ocanvas = document.createElement("canvas");
@@ -302,15 +324,16 @@ export class RPEntity extends ActiveEntity {
 		}
 
 		const filename = stendhal.paths.sprites + "/outfit/" + part + "/" + n + ".png";
-		const colors = this["outfit_colors"];
-		let colorname;
-		if (part === "body" || part === "head") {
-			colorname = "skin";
-		} else {
-			colorname = part;
+		let color: any;
+		if (this.outfit) {
+			if (part === "body" || part === "head") {
+				color = this.outfit.getLayerColor("skin");
+			} else {
+				color = this.outfit.getLayerColor(part);
+			}
 		}
-		if (typeof(colors) !== "undefined" && (typeof(colors[colorname]) !== "undefined")) {
-			return stendhal.data.sprites.getFiltered(filename, "trueColor", colors[colorname]);
+		if (typeof(color) !== "undefined") {
+			return stendhal.data.sprites.getFiltered(filename, "trueColor", color);
 		} else {
 			return stendhal.data.sprites.get(filename);
 		}
