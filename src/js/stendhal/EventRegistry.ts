@@ -381,7 +381,8 @@ export class EventRegistry {
 					sound = SoundID[sound_id];
 				}
 
-				stendhal.sound.playLocalizedEffect(rpobject["_x"], rpobject["_y"], radius, this["layer"], sound, volume);
+				const soundObject = stendhal.sound.playLocalizedEffect(rpobject["_x"], rpobject["_y"], radius, this["layer"], sound, volume);
+				soundObject.persistent = typeof(this["persistent"]) !== "undefined";
 			}
 		}); // sound_event
 
