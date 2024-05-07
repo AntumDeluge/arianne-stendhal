@@ -1,5 +1,5 @@
 /***************************************************************************
- *                    (C) Copyright 2003-2023 - Marauroa                   *
+ *                    (C) Copyright 2003-2024 - Marauroa                   *
  ***************************************************************************
  ***************************************************************************
  *                                                                         *
@@ -188,6 +188,9 @@ public class StendhalRPRuleProcessor implements IRPRuleProcessor {
 			} catch (final RuntimeException ep) {
 				logger.info("No server extensions configured in ini file.");
 			}
+
+			// initialize daily notifier
+			SingletonRepository.getDailyNotifier();
 
 			// Remove online info from database.
 			DAORegister.get().get(StendhalWebsiteDAO.class).clearOnlineStatus();
