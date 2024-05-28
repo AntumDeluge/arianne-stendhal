@@ -77,5 +77,15 @@ export class VisualsTab extends AbstractSettingsTab {
 		chkActivityInd.addTo(col1);
 		chkAnimate.addTo(col1);
 		chkAnimate.componentElement.classList.add("indented");
+
+		const chkEntityOverlay = new SettingsComponent("chk_entity_overlay",
+				"Entity overlay effects");
+		chkEntityOverlay.setValue(config.getBoolean("effect.entity-overlay"));
+		chkEntityOverlay.onchange = (evt: Event) => {
+			config.set("effect.entity-overlay", chkEntityOverlay.getValue());
+			StandardMessages.changeNeedsRefresh();
+			parent.refresh();
+		};
+		chkEntityOverlay.addTo(col1);
 	}
 }
