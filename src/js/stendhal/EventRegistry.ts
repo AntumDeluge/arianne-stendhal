@@ -13,6 +13,7 @@ declare var marauroa: any;
 declare var stendhal: any;
 
 import { SoundID } from "./data/sound/SoundID";
+import { SoundLayer } from "./data/sound/SoundLayer";
 
 import { RPEntity } from "./entity/RPEntity";
 import { RPObject } from "./entity/RPObject";
@@ -33,6 +34,7 @@ import { ui } from "./ui/UI";
 import { DialogContentComponent } from "./ui/toolkit/DialogContentComponent";
 
 import { Chat } from "./util/Chat";
+import { MathUtil } from "./util/MathUtil";
 
 
 export class EventRegistry {
@@ -239,7 +241,7 @@ export class EventRegistry {
 				// play notification sound
 				const notif = stendhal.config.get("chat.private.sound");
 				if (notif && this.soundTextEvents[ttype]) {
-					stendhal.sound.playGlobalizedEffect(notif);
+					stendhal.sound.playGlobal(SoundLayer.GUI, notif);
 				}
 			}
 		}); // private_text
@@ -381,7 +383,10 @@ export class EventRegistry {
 					sound = SoundID[sound_id];
 				}
 
-				stendhal.sound.playLocalizedEffect(rpobject["_x"], rpobject["_y"], radius, this["layer"], sound, volume);
+				// TODO: include `volume`
+				const lidx = MathUtil.parseIntDefault(this["layer"], -1);
+				stendhal.sound.playPerceived(SoundLayer.checkLayer(lidx), sound, radius, rpobject["_x"],
+						rpobject["_y"]);
 			}
 		}); // sound_event
 
