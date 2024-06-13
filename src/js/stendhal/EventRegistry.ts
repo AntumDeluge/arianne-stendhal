@@ -369,6 +369,9 @@ export class EventRegistry {
 
 		this.register("sound_event", {
 			execute: function(rpobject: RPObject) {
+				// DEBUG:
+				//~ console.log("event volume: " + this["volume"]);
+
 				// adjust by the server specified volume, if any
 				const volume = MathUtil.parseIntDefault(this["volume"], 100);
 				const radius = parseInt(this["radius"], 10);
