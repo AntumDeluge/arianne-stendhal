@@ -369,13 +369,9 @@ export class EventRegistry {
 
 		this.register("sound_event", {
 			execute: function(rpobject: RPObject) {
-				var volume = 1;
-				// Adjust by the server specified volume, if any
-				if (this.hasOwnProperty("volume")) {
-					// NOTE: server uses int in range 1-100 while HTMLAudioElement uses float in range 0-1
-					volume *= parseInt(this["volume"], 10) / 100;
-				}
-				var radius = parseInt(this["radius"], 10);
+				// adjust by the server specified volume, if any
+				const volume = MathUtil.parseIntDefault(this["volume"], 100);
+				const radius = parseInt(this["radius"], 10);
 
 				let sound = this["sound"];
 				const sound_id = this["sound_id"];
@@ -383,9 +379,8 @@ export class EventRegistry {
 					sound = SoundID[sound_id];
 				}
 
-				// TODO: include `volume`
 				const lidx = MathUtil.parseIntDefault(this["layer"], -1);
-				stendhal.sound.playPerceived(SoundLayer.checkLayer(lidx), sound, radius, rpobject["_x"],
+				stendhal.sound.playLocal(sound, volume, SoundLayer.check(lidx), radius, rpobject["_x"],
 						rpobject["_y"]);
 			}
 		}); // sound_event
