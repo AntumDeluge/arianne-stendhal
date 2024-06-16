@@ -14,6 +14,8 @@ import { AbstractSettingsTab } from "./AbstractSettingsTab";
 
 import { SettingsDialog } from "../SettingsDialog";
 
+import { WidgetFactory } from "../../factory/WidgetFactory";
+
 import { singletons } from "../../../SingletonRepo";
 
 
@@ -22,14 +24,15 @@ export class InputTab extends AbstractSettingsTab {
 	constructor(parent: SettingsDialog, element: HTMLElement) {
 		super(element);
 
+		const col1 = this.child("#col1")!;
 
 		/* *** pathfinding *** */
 
-		parent.createCheckBox("chk_pathfinding", "pathfinding",
+		WidgetFactory.checkbox(col1, "set-pathfinding-ground", "Pathfinding via ground", "pathfinding",
 				"Click/Tap ground to walk", "Ground pathfinding disabled");
 
-		parent.createCheckBox("chk_pathfindingmm", "pathfinding.minimap",
-				"Click/Tap minimap to walk", "Minimap pathfinding disabled");
+		WidgetFactory.checkbox(col1, "set-pathfinding-minimap", "Pathfinding via minimap",
+				"pathfinding.minimap", "Click/Tap minimap to walk", "Minimap pathfinding disabled");
 
 
 		/* *** joystick interface *** */
